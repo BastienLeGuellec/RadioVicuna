@@ -1,6 +1,5 @@
 # RadioVicuna
-Repository linked to the manuscript "Unlocking Information Extraction from Free-Text Radiological Reports: Performance of an Open-Source GPT Model" submitted to Radiology.
-
+Script from the manuscript "Performance of an Open-Source Large Language Model in Extracting Information from Free-Text Radiology Reports" submitted to Radiology: Artificial Intelligence
 
 ## Installation
 
@@ -10,12 +9,12 @@ Repository linked to the manuscript "Unlocking Information Extraction from Free-
 If you installed text-generation-webui, just execute :
 
 ```bash
-  python download-model.py lmsys/vicuna-13b-v1.3
+  python download-model.py lmsys/vicuna-13b-v1.5
 ```
-2- Install FastChat :
+2- Install FastChat (the script works for version 0.2.36 as of march 5th 2024):
 
 ```bash
-    pip3 install fschat
+    pip install git+https;//github.com/lm-sys/FastChat@v0.2.36
 ```
 3- Edit the script_extraction.py file from this repository to update the paths to your Vicuna weights and source reports and name the table the script will create
 
