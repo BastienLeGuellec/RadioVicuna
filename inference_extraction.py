@@ -368,3 +368,132 @@ def chat_loop_extraction(
         print(j, '/',len(inputlist), '\n')
     outputcsv=[listID, outputlist]
     return(outputcsv)
+
+
+
+def chat_loop_extraction_logprobs(
+    model_path: str,
+    device: str,
+    num_gpus: int,
+    max_gpu_memory: str,
+    load_8bit: bool,
+    cpu_offloading: bool,
+    conv_template: Optional[str],
+    temperature: float,
+    repetition_penalty: float,
+    max_new_tokens: int,
+    chatio: ChatIO,
+    gptq_config: GptqConfig,
+    revision: str,
+    debug: bool,
+    few_shots:list,
+    file_path:str,
+):
+    # Model
+    model, tokenizer = load_model(
+        model_path,
+        device,
+        num_gpus,
+        max_gpu_memory,
+        load_8bit,
+        cpu_offloading,
+        gptq_config,
+        revision,
+        debug,
+    )
+    is_t5 = "t5" in str(type(model)).lower()
+
+    # Hardcode T5's default repetition penalty to be 1.2
+    if is_t5 and repetition_penalty == 1.0:
+        repetition_penalty = 1.2
+
+
+    conv = get_conv_template(conv_template)
+
+
+    f = open(file_path, 'r')
+    inputlist = f.read()
+
+    inputlist = inputlist.split("NEXT_DOSS_PLEASE")
+    conv = get_conv_template(conv_template)
+    outputlist=[]
+    listID=[]  
+
+    j=0
+    ner=0 #(len(inputlist)-1)
+
+    while True and j<(len(inputlist)-1):
+        # Chat
+        conv.messages=[]
+
+        inp = inputlist[j]
+       
+        for i in range(0, len(few_shots)):
+            conv.messages.append(few_shots[i])
+        conv.messages.append(['Doctor', inp])
+        conv.messages.append(['Robot', None])
+        prompt = conv.get_prompt()
+        print(inp)
+
+                
+        gen_params = {
+            "model": model_path,
+            "prompt": prompt,
+            "temperature": temperature,
+            "max_new_tokens": max_new_tokens,
+            "stop": conv.stop_str,
+            "stop_token_ids": conv.stop_token_ids,
+            "echo": False,
+        }
+        generate_stream_func = generate_stream
+
+
+        output_stream = generate_stream_func(model, tokenizer, gen_params, device)
+        outputs,logprobs = chatio.stream_output(output_stream)
+        print(logprobs)
+        conv.update_last_message(outputs.strip())
+        chatanswer = outputs.strip()
+
+
+        
+        IDexam=str(chatanswer)
+        IDexam= IDexam.replace(';', " ")
+        chatanswer=chatanswer.lower()
+                
+        if (chatanswer == '') or ('chatbot' in chatanswer) or ('N/A' in chatanswer):
+            print('Erreur')
+            ner+=1
+            print(ner)
+        elif (len(chatanswer)>4000):
+            print('Erreur : réponse trop longue')
+            ner+=1
+            print(ner)
+        elif (len(chatanswer)<5):
+            print('Erreur : réponse vide')
+            ner+=1
+            print(ner)
+        elif 'headache' not in chatanswer[-15:]:
+            print('Not the desired template')
+            ner+=1  
+       
+        elif '/can' in chatanswer: #it means at least one symptom causes headache
+            outputlist.append(1)
+            listID.append(IDexam)
+            print('CAN CAUSE HEADACHE')
+            j+=1
+            ner=0
+        else: #it means no symptom causes headache
+            outputlist.append(0)
+            listID.append(IDexam)
+            j+=1
+            ner=0
+            print('no headache')
+        
+        if ner>10:
+            outputlist.append("too many errors")
+            listID.append(IDexam)
+            j+=1
+            ner=0
+        print(j, '/',len(inputlist), '\n')
+    outputcsv=[listID, outputlist]
+    return(outputcsv)
