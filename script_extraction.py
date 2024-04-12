@@ -7,7 +7,7 @@ from itertools import zip_longest
 
 import shutil
 
-shutil.move("/PATH/inference_radiollm.py", "/PATH/fastchat/serve/inference_radiollm.py")
+shutil.move("/PATH/inference_extraction.py", "/PATH/fastchat/serve/inference_extraction.py")
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -18,7 +18,7 @@ from rich.markdown import Markdown
 from rich.live import Live
 
 from fastchat.model.model_adapter import add_model_args
-from fastchat.serve.inference_extraction import ChatIO, chat_loop_extraction
+from fastchat.serve.inference_extraction import ChatIO, chat_loop_extraction, chat_loop_extraction_logprobs
 
 #Do you want to display the logprobs?
 logprobs=True
@@ -119,10 +119,7 @@ class SimpleChatIO_log(ChatIO):
         print(text)
 
 
-if logprobs==True:
-    Chatio_log=SimpleChatIO_log()
-else:
-    chatio = SimpleChatIO()
+
 
 
 
@@ -162,8 +159,13 @@ gptq_config: possibility to load a gptq model
 revision: revision mode
 """
 
+if logprobs==True:
+    Chatio_log=SimpleChatIO_log()
+    d= chat_loop_extraction_logprobs(model_path=vicuna,device='cuda',num_gpus=2,max_gpu_memory=None,load_8bit=False,cpu_offloading=False,conv_template="vicuna_v1.1",temperature=0.2,repetition_penalty=100,max_new_tokens=1024,chatio=chatio,debug=False,few_shots=few_shots_finding,file_path=source_reports, gptq_config=False, revision=False)
 
-d= chat_loop_interpret(model_path=vicuna,device='cuda',num_gpus=2,max_gpu_memory=None,load_8bit=False,cpu_offloading=False,conv_template="vicuna_v1.1",temperature=0.2,repetition_penalty=100,max_new_tokens=1024,chatio=chatio,debug=False,few_shots=few_shots_finding,file_path=source_reports, gptq_config=False, revision=False)
+else:
+    chatio = SimpleChatIO()
+    d= chat_loop_extraction(model_path=vicuna,device='cuda',num_gpus=2,max_gpu_memory=None,load_8bit=False,cpu_offloading=False,conv_template="vicuna_v1.1",temperature=0.2,repetition_penalty=100,max_new_tokens=1024,chatio=chatio,debug=False,few_shots=few_shots_finding,file_path=source_reports, gptq_config=False, revision=False)
 
 export_data = zip_longest(*d, fillvalue = '')
 
