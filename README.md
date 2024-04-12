@@ -16,13 +16,11 @@ If you installed text-generation-webui, just execute :
 ```bash
     pip install git+https;//github.com/lm-sys/FastChat@v0.2.36
 ```
-3- Edit the script_extraction.py file from this repository to update the paths to your Vicuna weights and source reports and name the table the script will create
+3- Edit the script_extraction.py file from this repository to update the paths to FastChat, Vicuna weights and source reports, and name the table the script will create
 
-4- Copy the auto_inference.py file from this repository to /FastChat/FastChat/serve
+4- Edit the inference_extraction.py file to match the variables you want to extract from the reports
 
-5- Edit the auto_inference.py file to match the variables you want to extract from the reports
-
-6- Launch the script !
+5- Launch the script !
 
 ```bash
     python script_extraction
